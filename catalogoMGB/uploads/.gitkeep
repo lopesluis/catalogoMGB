@@ -1,0 +1,3 @@
+# Esta pasta armazena os arquivos enviados pelos usuários (Shapefiles, GeoJSON, etc.)
+# Os arquivos serão criados durante o uso do sistema.
+# Você pode apagar este .gitkeep após o download, se desejar.
