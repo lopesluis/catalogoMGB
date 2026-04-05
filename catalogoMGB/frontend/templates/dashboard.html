@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <title>Dashboard - Catálogo MGB</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        .dashboard-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .stat-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .stat-number {
+            font-size: 48px;
+            font-weight: bold;
+            color: #2d6a4f;
+        }
+        .stat-label {
+            font-size: 14px;
+            color: #666;
+            margin-top: 8px;
+        }
+        .chart-container {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .chart-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #1a472a;
+            margin-bottom: 15px;
+            border-left: 4px solid #2d6a4f;
+            padding-left: 12px;
+        }
+        .categoria-lista {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .categoria-item {
+            background: #e9ecef;
+            padding: 8px 16px;
+            border-radius: 25px;
+            font-size: 14px;
+        }
+        .categoria-item .count {
+            background: #2d6a4f;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 20px;
+            margin-left: 8px;
+            font-size: 12px;
+        }
+        .btn-voltar {
+            background: #6c757d;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 6px;
+            text-decoration: none;
+            display: inline-block;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <a href="{{ url_for('index') }}" class="btn-voltar">← Voltar</a>
+        
+        <h1>📊 Dashboard</h1>
+        <p>Estatísticas e métricas do catálogo</p>
+        
+        <div class="stats-grid" id="statsGrid">
+            <div class="stat-card">
+                <div class="stat-number" id="totalMetadados">-</div>
+                <div class="stat-label">Total de Metadados</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="totalAprovados" style="color: #28a745;">-</div>
+                <div class="stat-label">Aprovados</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="totalPendentes" style="color: #f39c12;">-</div>
+                <div class="stat-label">Pendentes</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="totalRejeitados" style="color: #dc3545;">-</div>
+                <div class="stat-label">Rejeitados</div>
+            </div>
+        </div>
+        
+        <div class="chart-container">
+            <div class="chart-title">📈 Metadados por Mês</div>
+            <div id="graficoMeses" style="font-family: monospace; font-size: 14px;"></div>
+        </div>
+        
+        <div class="chart-container">
+            <div class="chart-title">🏷️ Categorias Temáticas Mais Usadas</div>
+            <div id="categoriasTop" class="categoria-lista"></div>
+        </div>
+        
+        <div class="chart-container">
+            <div class="chart-title">👥 Atividade dos Usuários</div>
+            <div id="atividadeUsuarios"></div>
+        </div>
+    </div>
+    
+    <script>
+        fetch('/api/estatisticas')
+            .then(response => response.json())
+            .then(data => {
+                // Stats básicos
+                document.getElementById('totalMetadados').innerText = data.total_metadados;
+                document.getElementById('totalAprovados').innerText = data.aprovados;
+                document.getElementById('totalPendentes').innerText = data.pendentes;
+                document.getElementById('totalRejeitados').innerText = data.rejeitados;
+                
+                // Gráfico de meses
+                if (data.meses && data.meses.length) {
+                    let html = '<table style="width: 100%; border-collapse: collapse;">';
+                    for (let m of data.meses) {
+                        const percentual = (m.total / data.total_metadados) * 100;
+                        html += `
+                            <tr>
+                                <td style="padding: 5px; width: 100px;">${m.mes}</td>
+                                <td style="padding: 5px;">
+                                    <div style="background: #2d6a4f; width: ${percentual}%; height: 25px; border-radius: 5px; display: inline-block;"></div>
+                                    <span style="margin-left: 10px;">${m.total}</span>
+                                </td>
+                            </tr>
+                        `;
+                    }
+                    html += '</table>';
+                    document.getElementById('graficoMeses').innerHTML = html;
+                } else {
+                    document.getElementById('graficoMeses').innerHTML = '<p>Nenhum dado disponível</p>';
+                }
+                
+                // Categorias
+                if (data.categorias && data.categorias.length) {
+                    let html = '';
+                    for (let c of data.categorias.slice(0, 10)) {
+                        html += `<span class="categoria-item">${c.categoria} <span class="count">${c.total}</span></span>`;
+                    }
+                    document.getElementById('categoriasTop').innerHTML = html;
+                } else {
+                    document.getElementById('categoriasTop').innerHTML = '<p>Nenhuma categoria registrada</p>';
+                }
+                
+                // Atividade dos usuários
+                if (data.usuarios && data.usuarios.length) {
+                    let html = '<table style="width: 100%; border-collapse: collapse;">';
+                    html += '<tr><th>Usuário</th><th>Metadados</th><th>Papel</th></tr>';
+                    for (let u of data.usuarios) {
+                        html += `
+                            <tr style="border-bottom: 1px solid #eee;">
+                                <td style="padding: 8px;">${u.nome}</td>
+                                <td style="padding: 8px;">${u.total}</td>
+                                <td style="padding: 8px;">${u.papel}</td>
+                            </tr>
+                        `;
+                    }
+                    html += '</table>';
+                    document.getElementById('atividadeUsuarios').innerHTML = html;
+                } else {
+                    document.getElementById('atividadeUsuarios').innerHTML = '<p>Nenhum usuário ativo</p>';
+                }
+            })
+            .catch(error => {
+                console.error('Erro:', error);
+                document.getElementById('statsGrid').innerHTML = '<div class="stat-card">Erro ao carregar estatísticas</div>';
+            });
+    </script>
+</body>
+</html>

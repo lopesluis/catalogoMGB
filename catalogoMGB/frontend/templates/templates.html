@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <title>Pendentes - Catálogo MGB</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>⏳ Metadados Aguardando Aprovação</h1>
+            <a href="{{ url_for('index') }}" class="btn-small">← Voltar</a>
+        </header>
+
+        <div class="pendentes-list">
+            {% for metadado in pendentes %}
+                <div class="card pending">
+                    <div class="card-content">
+                        <h3>{{ metadado.titulo }}</h3>
+                        <p class="meta">
+                            Criado por: {{ metadado.criado_por.nome }} | 
+                            Data: {{ metadado.data_criacao.strftime('%d/%m/%Y %H:%M') }}
+                        </p>
+                        <p>{{ metadado.resumo[:200] }}...</p>
+                        
+                        <div class="action-buttons">
+                            <a href="{{ url_for('aprovar', id=metadado.id) }}" class="btn btn-success">✅ Aprovar</a>
+                            <a href="{{ url_for('rejeitar', id=metadado.id) }}" class="btn btn-danger">❌ Rejeitar</a>
+                        </div>
+                    </div>
+                </div>
+            {% else %}
+                <p class="empty">Nenhum metadado aguardando aprovação.</p>
+            {% endfor %}
+        </div>
+    </div>
+</body>
+</html>

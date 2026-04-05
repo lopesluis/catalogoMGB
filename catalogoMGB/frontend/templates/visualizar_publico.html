@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ metadado.titulo }} - Catálogo MGB</title>
+    
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    
+    <style>
+        /* Layout 2 colunas */
+        .two-columns {
+            display: flex;
+            gap: 30px;
+            flex-wrap: wrap;
+        }
+        .col-left {
+            flex: 0 0 68%;
+        }
+        .col-right {
+            flex: 0 0 28%;
+        }
+        
+        @media (max-width: 768px) {
+            .col-left, .col-right {
+                flex: 0 0 100%;
+            }
+        }
+        
+        /* Cards */
+        .info-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .info-card h3 {
+            color: #1a472a;
+            border-bottom: 2px solid #2d6a4f;
+            padding-bottom: 8px;
+            margin-bottom: 15px;
+        }
+        .info-row {
+            display: flex;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+        }
+        .info-label {
+            width: 180px;
+            font-weight: bold;
+            color: #555;
+        }
+        .info-value {
+            flex: 1;
+            color: #333;
+        }
+        
+        /* Mapa */
+        #mapa {
+            height: 300px;
+            border-radius: 8px;
+            margin-top: 10px;
+        }
+        
+        /* Thumbnail */
+        .thumbnail-container {
+            text-align: center;
+        }
+        .thumbnail-detail {
+            max-width: 100%;
+            max-height: 200px;
+            border-radius: 8px;
+            object-fit: cover;
+        }
+        
+        /* Botões */
+        .btn-xml, .btn-download {
+            display: block;
+            text-align: center;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        .btn-xml {
+            background: #17a2b8;
+            color: white;
+        }
+        .btn-download {
+            background: #2d6a4f;
+            color: white;
+        }
+        .btn-xml:hover, .btn-download:hover {
+            opacity: 0.9;
+        }
+        
+        /* Arquivos */
+        .files-list {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 6px;
+        }
+        .files-list a {
+            color: #2d6a4f;
+            text-decoration: none;
+            display: block;
+            padding: 5px 0;
+        }
+        .files-list a:hover {
+            text-decoration: underline;
+        }
+        
+        /* Badges */
+        .badge {
+            background: #e9ecef;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            display: inline-block;
+            margin-right: 5px;
+            margin-bottom: 5px;
+        }
+        .badge-categoria {
+            background: #2d6a4f;
+            color: white;
+        }
+        
+        .status-aprovado {
+            display: inline-block;
+            background: #28a745;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+        }
+        
+        .btn-back {
+            background: #6c757d;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            text-decoration: none;
+            display: inline-block;
+        }
+        
+        .alert-descontinuado {
+            background: #dc3545;
+            color: white;
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        
+        header {
+            background: linear-gradient(135deg, #1a472a, #2d6a4f);
+            color: white;
+            padding: 25px;
+            border-radius: 12px;
+            margin-bottom: 25px;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">
+    <div>
+        <h1>{{ metadado.titulo }}</h1>
+        <div style="display: flex; gap: 15px; flex-wrap: wrap; margin-top: 8px;">
+            <span>📅 {{ metadado.data_referencia or 'Data não informada' }}</span>
+            <span>👤 {{ metadado.responsavel or 'Responsável não informado' }}</span>
+            <span class="status-aprovado">✅ Aprovado</span>
+        </div>
+    </div>
+    <div style="display: flex; gap: 10px; align-items: center;">
+        <a href="{{ url_for('sobre') }}" class="btn-small" style="background: #17a2b8; color: white; padding: 6px 12px; border-radius: 5px; text-decoration: none;">📌 Sobre</a>
+        {% if usuario %}
+            <span>👤 {{ usuario.nome }} ({{ usuario.papel }})</span>
+            <a href="{{ url_for('logout') }}" class="btn-small" style="background: #6c757d; color: white; padding: 6px 12px; border-radius: 5px; text-decoration: none;">Sair</a>
+        {% else %}
+            <a href="{{ url_for('login') }}" class="btn-small" style="background: #3498db; color: white; padding: 6px 12px; border-radius: 5px; text-decoration: none;">Login</a>
+        {% endif %}
+    </div>
+</header>
+
+        {% if metadado.descontinuado %}
+        <div class="alert-descontinuado">
+            ⚠️ <strong>ATENÇÃO:</strong> Este conjunto de dados foi descontinuado em {{ metadado.data_descontinuacao.strftime('%d/%m/%Y') if metadado.data_descontinuacao else 'data desconhecida' }}.
+            {% if metadado.motivo_descontinuacao %}
+            <br>Motivo: {{ metadado.motivo_descontinuacao }}
+            {% endif %}
+        </div>
+        {% endif %}
+
+        <!-- Layout 2 colunas -->
+        <div class="two-columns">
+            <!-- COLUNA ESQUERDA - DADOS -->
+            <div class="col-left">
+                <!-- Identificação -->
+                <div class="info-card">
+                    <h3>📋 Identificação</h3>
+                    <div class="info-row">
+                        <div class="info-label">Título:</div>
+                        <div class="info-value">{{ metadado.titulo }}</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">Data do Dado:</div>
+                        <div class="info-value">{{ metadado.data_referencia or 'Não informada' }}</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">Responsável:</div>
+                        <div class="info-value">{{ metadado.responsavel or 'Não informado' }}</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">Idioma:</div>
+                        <div class="info-value">{{ metadado.idioma or 'Português' }}</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">Resumo:</div>
+                        <div class="info-value">{{ metadado.resumo or 'Sem descrição' }}</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">Categorias Temáticas:</div>
+                        <div class="info-value">
+                            {% for cat in metadado.categorias_lista %}
+                                <span class="badge badge-categoria">{{ cat }}</span>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Distribuição -->
+                <div class="info-card">
+                    <h3>📦 Distribuição</h3>
+                    <div class="info-row">
+                        <div class="info-label">Formato:</div>
+                        <div class="info-value">{{ metadado.formato_distribuicao or 'Não informado' }}</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">Sistema de Referência:</div>
+                        <div class="info-value">{{ metadado.sistema_referencia or 'Não informado' }}</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">Escala:</div>
+                        <div class="info-value">{{ metadado.escala or 'Não informada' }}</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">Palavras-chave:</div>
+                        <div class="info-value">
+                            {% if metadado.palavras_chave %}
+                                {% for kw in metadado.palavras_chave.split(',') %}
+                                    <span class="badge">{{ kw.strip() }}</span>
+                                {% endfor %}
+                            {% else %}
+                                Não informadas
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Informações Espaciais -->
+                <div class="info-card">
+                    <h3>🗺️ Informações Espaciais</h3>
+                    <div class="info-row">
+                        <div class="info-label">Sistema de Coordenadas:</div>
+                        <div class="info-value">{{ metadado.sistema_coordenadas or 'Não informado' }}</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">Datum:</div>
+                        <div class="info-value">{{ metadado.datum or 'SIRGAS2000' }}</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">Extensão Geográfica:</div>
+                        <div class="info-value">
+                            Norte: {{ metadado.extensao_norte or '---' }}° | 
+                            Sul: {{ metadado.extensao_sul or '---' }}° | 
+                            Leste: {{ metadado.extensao_leste or '---' }}° | 
+                            Oeste: {{ metadado.extensao_oeste or '---' }}°
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Metadado -->
+                <div class="info-card">
+                    <h3>📄 Informações do Metadado</h3>
+                    <div class="info-row">
+                        <div class="info-label">Contato:</div>
+                        <div class="info-value">{{ metadado.contato_metadados or 'Não informado' }}</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">Data do Metadado:</div>
+                        <div class="info-value">{{ metadado.data_metadados or 'Não informada' }}</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">Status do Metadado:</div>
+                        <div class="info-value">{{ metadado.status_metadado or 'Não informado' }}</div>
+                    </div>
+                </div>
+
+                <!-- Arquivos -->
+                <div class="info-card">
+                    <h3>📎 Arquivos Anexados</h3>
+                    <div class="files-list">
+                        {% if metadado.arquivos %}
+                            {% for arquivo in metadado.arquivos %}
+                                <div>📄 <a href="{{ url_for('download', nome_arquivo=arquivo.nome_salvo) }}" target="_blank">{{ arquivo.nome_original }}</a></div>
+                            {% endfor %}
+                        {% else %}
+                            <span>Nenhum arquivo anexado</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- COLUNA DIREITA - THUMBNAIL + MAPA + AÇÕES -->
+            <div class="col-right">
+                <!-- Thumbnail -->
+                {% if metadado.thumbnail %}
+                <div class="info-card thumbnail-container">
+                    <h3>🖼️ Pré-visualização</h3>
+                    <img src="/thumb/{{ metadado.thumbnail }}" class="thumbnail-detail" alt="{{ metadado.titulo }}">
+                </div>
+                {% endif %}
+
+                <!-- Mapa Interativo -->
+                <div class="info-card">
+                    <h3>🗺️ Mapa de Localização</h3>
+                    <div id="mapa" style="height: 300px;"></div>
+                    <div style="font-size: 11px; text-align: center; margin-top: 8px; color: #666;">
+                        {% if metadado.arquivos %}
+                            Baseado nos dados geoespaciais anexados
+                        {% elif metadado.extensao_norte %}
+                            Baseado na extensão geográfica informada
+                        {% else %}
+                            Mapa padrão do Brasil
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Ações -->
+                <div class="info-card">
+                    <h3>⚙️ Ações</h3>
+                    <a href="{{ url_for('exportar_xml', id=metadado.id) }}" class="btn-xml">📄 Exportar XML (ISO 19115)</a>
+                    {% if metadado.arquivos %}
+                        <a href="#" class="btn-download" onclick="downloadTodosArquivos(); return false;">📥 Baixar todos os arquivos</a>
+                    {% endif %}
+                </div>
+				<!-- Ações de ADMIN (apenas para admin) -->
+				{% if usuario and usuario.papel == 'admin' %}
+				<div class="info-card">
+					<h3>🔧 Administração</h3>
+    
+					{% if metadado.status == 'aprovado' %}
+					<a href="{{ url_for('admin_desaprovar', id=metadado.id) }}" class="btn-warning" style="display: block; text-align: center; padding: 8px; margin-bottom: 8px; background: #f39c12; color: white; text-decoration: none; border-radius: 6px;" onclick="return confirm('Desaprovar {{ metadado.titulo }}? Ele voltará para pendente.')">
+            🔄 Desaprovar
+					</a>
+        
+					<a href="{{ url_for('admin_descontinuar', id=metadado.id) }}" class="btn-secondary" style="display: block; text-align: center; padding: 8px; margin-bottom: 8px; background: #6c757d; color: white; text-decoration: none; border-radius: 6px;">
+            📌 Marcar Descontinuado
+					</a>
+					{% endif %}
+    
+					<a href="{{ url_for('admin_editar_metadado', id=metadado.id) }}" class="btn-info" style="display: block; text-align: center; padding: 8px; margin-bottom: 8px; background: #17a2b8; color: white; text-decoration: none; border-radius: 6px;">
+        ✏️ Editar Metadado
+					</a>
+    
+					<a href="{{ url_for('admin_excluir', id=metadado.id) }}" class="btn-danger" style="display: block; text-align: center; padding: 8px; background: #dc3545; color: white; text-decoration: none; border-radius: 6px;" onclick="return confirm('EXCLUSÃO PERMANENTE. Tem certeza?')">
+        🗑️ Excluir Metadado
+					</a>
+				</div>
+				{% endif %}
+            </div>
+        </div>
+
+        <div style="text-align: center; margin-top: 30px;">
+            <a href="{{ url_for('index') }}" class="btn-back">← Voltar ao Catálogo</a>
+        </div>
+    </div>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="{{ url_for('static', filename='mapa.js') }}"></script>
+    
+    <script>
+        // Inicializar mapa
+        initMapa('mapa');
+        
+        // Carregar GeoJSON
+        fetch('/api/geojson/{{ metadado.id }}')
+            .then(response => response.json())
+            .then(data => {
+                carregarGeoJSON('/api/geojson/{{ metadado.id }}');
+            })
+            .catch(error => {
+                console.error('Erro ao carregar GeoJSON:', error);
+            });
+        
+        // Função para baixar todos os arquivos
+        function downloadTodosArquivos() {
+            const arquivos = {{ metadado.arquivos | tojson }};
+            arquivos.forEach(arquivo => {
+                const link = document.createElement('a');
+                link.href = '/download/' + arquivo.nome_salvo;
+                link.download = arquivo.nome_original;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            });
+        }
+    </script>
+	<!-- Rodapé -->
+<footer style="text-align: center; padding: 25px; margin-top: 40px; border-top: 1px solid #ddd; background: #f8f9fa; border-radius: 8px;">
+    <p style="margin: 5px 0;">
+        <strong>Catálogo MGB</strong> - Desenvolvido por <strong>Luís Lopes</strong>
+    </p>
+    <p style="margin: 5px 0; font-size: 12px; color: #888;">
+        Software gratuito - Padrão ISO 19115 / Perfil MGB
+    </p>
+    <p style="margin: 5px 0;">
+        <a href="{{ url_for('sobre') }}" style="color: #2d6a4f; text-decoration: none; margin: 0 10px;">📌 Sobre</a>
+        <a href="https://nubank.com.br/cobrar/2grxq/69d29375-c431-4270-87f1-cbbd9a72551f" style="color: #2d6a4f; text-decoration: none; margin: 0 10px;">❤️ Doação</a>
+        <a href="mailto:geo.luislopes@gmail.com" style="color: #2d6a4f; text-decoration: none; margin: 0 10px;">📧 Contato</a>
+    </p>
+    <p style="margin: 10px 0 0 0; font-size: 11px; color: #aaa;">
+        © 2025 - Todos os direitos reservados
+    </p>
+</footer>
+</body>
+</html>

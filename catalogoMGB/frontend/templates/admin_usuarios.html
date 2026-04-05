@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <title>Gerenciar Usuários - Admin</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+        .user-table { width: 100%; border-collapse: collapse; background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        .user-table th, .user-table td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
+        .user-table th { background: #2d6a4f; color: white; }
+        .badge-admin { background: #f39c12; color: white; padding: 4px 8px; border-radius: 20px; font-size: 11px; }
+        .badge-cadastrador { background: #3498db; color: white; padding: 4px 8px; border-radius: 20px; font-size: 11px; }
+        .btn-sm { padding: 5px 10px; font-size: 12px; border-radius: 5px; text-decoration: none; margin: 0 2px; display: inline-block; }
+        .btn-edit { background: #17a2b8; color: white; }
+        .btn-delete { background: #dc3545; color: white; }
+        .btn-add { background: #28a745; color: white; padding: 10px 20px; border-radius: 6px; text-decoration: none; }
+        .btn-voltar { background: #6c757d; color: white; padding: 10px 20px; border-radius: 6px; text-decoration: none; }
+        header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .alert { padding: 12px; border-radius: 6px; margin-bottom: 20px; }
+        .alert-success { background: #d4edda; color: #155724; border-left: 4px solid #28a745; }
+        .alert-danger { background: #f8d7da; color: #721c24; border-left: 4px solid #dc3545; }
+        .alert-warning { background: #fff3cd; color: #856404; border-left: 4px solid #ffc107; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>👥 Gerenciar Usuários</h1>
+            <div>
+                <a href="{{ url_for('admin') }}" class="btn-voltar">← Voltar</a>
+            </div>
+        </header>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }}">{{ message }}</div>
+            {% endfor %}
+        {% endwith %}
+
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Usuário</th>
+                    <th>Nome</th>
+                    <th>Email</th>
+                    <th>Papel</th>
+                    <th>Data Criação</th>
+                    <th>Metadados</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for u in usuarios %}
+                <tr>
+                    <td>{{ u.id }}</td>
+                    <td><strong>{{ u.username }}</strong></td>
+                    <td>{{ u.nome }}</td>
+                    <td>{{ u.email }}</td>
+                    <td>
+                        {% if u.papel == 'admin' %}
+                            <span class="badge-admin">👑 Admin</span>
+                        {% else %}
+                            <span class="badge-cadastrador">📝 Cadastrador</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ u.data_criacao.strftime('%d/%m/%Y') if u.data_criacao else '-' }}</td>
+                    <td>{{ u.metadados|length }}</td>
+                    <td>
+                        <a href="{{ url_for('admin_editar_usuario', id=u.id) }}" class="btn-sm btn-edit">✏️ Editar</a>
+                        {% if u.id != current_user.id %}
+                            <form method="POST" action="{{ url_for('admin_excluir_usuario', id=u.id) }}" style="display: inline;" onsubmit="return confirm('Tem certeza que deseja excluir {{ u.nome }}?')">
+                                <button type="submit" class="btn-sm btn-delete" style="border: none; cursor: pointer;">🗑️ Excluir</button>
+                            </form>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>

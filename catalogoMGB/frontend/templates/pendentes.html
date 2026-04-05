@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <title>Pendentes - Catálogo MGB</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        .pending-list { max-width: 900px; margin: 0 auto; }
+        .card.pending { margin-bottom: 20px; border-left: 4px solid #f39c12; background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        .action-buttons { display: flex; gap: 10px; margin-top: 15px; flex-wrap: wrap; }
+        .btn-success { background: #28a745; color: white; }
+        .btn-danger { background: #dc3545; color: white; }
+        .btn-info { background: #17a2b8; color: white; }
+        .btn-sm { padding: 6px 14px; font-size: 13px; border-radius: 5px; text-decoration: none; display: inline-block; }
+        .empty { text-align: center; padding: 40px; color: #666; }
+        .meta { font-size: 12px; color: #888; margin-bottom: 10px; }
+        .resumo { font-size: 14px; color: #555; margin-bottom: 10px; }
+        .card-content { padding: 18px; }
+        h3 { margin-bottom: 10px; color: #1a472a; }
+        header { background: linear-gradient(135deg, #1a472a, #2d6a4f); color: white; padding: 20px; border-radius: 10px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }
+        .btn-small { display: inline-block; padding: 5px 12px; background: #3498db; color: white; text-decoration: none; border-radius: 5px; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>⏳ Metadados Aguardando Aprovação</h1>
+            <a href="{{ url_for('index') }}" class="btn-small">← Voltar</a>
+        </header>
+
+        <div class="pending-list">
+            {% if pendentes %}
+                {% for metadado in pendentes %}
+                    <div class="card pending">
+                        <div class="card-content">
+                            <h3>{{ metadado.titulo }}</h3>
+                            <div class="meta">
+                                <span>👤 Submetido por: <strong>{{ metadado.criado_por.nome if metadado.criado_por else 'Desconhecido' }}</strong></span>
+                                <span>📅 Data: {{ metadado.data_criacao.strftime('%d/%m/%Y às %H:%M') if metadado.data_criacao else 'Data não informada' }}</span>
+                            </div>
+                            <p class="resumo">{{ metadado.resumo[:200] if metadado.resumo else 'Sem descrição' }}{% if metadado.resumo and metadado.resumo|length > 200 %}...{% endif %}</p>
+                            <div class="action-buttons">
+                                <a href="{{ url_for('visualizar_pendente', id=metadado.id) }}" class="btn-info btn-sm">🔍 Visualizar Completo</a>
+                                <a href="{{ url_for('aprovar', id=metadado.id) }}" class="btn-success btn-sm" onclick="return confirm('Aprovar {{ metadado.titulo }}?')">✅ Aprovar</a>
+                                <a href="{{ url_for('rejeitar', id=metadado.id) }}" class="btn-danger btn-sm" onclick="return confirm('Rejeitar {{ metadado.titulo }}?')">❌ Rejeitar</a>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <div class="empty"><p>🎉 Nenhum metadado aguardando aprovação.</p></div>
+            {% endif %}
+        </div>
+    </div>
+</body>
+</html>

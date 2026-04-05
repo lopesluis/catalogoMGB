@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <title>Administração - Catálogo MGB</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>⚙️ Painel do Administrador</h1>
+            <a href="{{ url_for('index') }}" class="btn-small">← Voltar</a>
+        </header>
+
+        <div class="admin-sections">
+            <!-- Gerenciar Usuários -->
+            <div class="card">
+                <h2>👥 Gerenciar Usuários</h2>
+                
+                <form method="POST" action="{{ url_for('criar_usuario') }}" class="form-inline">
+                    <input type="text" name="username" placeholder="Usuário" required>
+                    <input type="text" name="nome" placeholder="Nome completo" required>
+                    <input type="email" name="email" placeholder="Email" required>
+                    <input type="password" name="senha" placeholder="Senha" required>
+                    <select name="papel">
+                        <option value="cadastrador">Cadastrador</option>
+                        <option value="admin">Administrador</option>
+                    </select>
+                    <button type="submit" class="btn btn-primary">➕ Adicionar</button>
+                </form>
+                
+                <table class="user-table">
+                    <thead>
+                        <tr><th>Usuário</th><th>Nome</th><th>Email</th><th>Papel</th><th>Data</th></tr>
+                    </thead>
+                    <tbody>
+                        {% for user in usuarios %}
+                        <tr>
+                            <td>{{ user.username }}</td>
+                            <td>{{ user.nome }}</td>
+                            <td>{{ user.email }}</td>
+                            <td><span class="badge {{ 'badge-admin' if user.papel == 'admin' else 'badge-user' }}">{{ user.papel }}</span></td>
+                            <td>{{ user.data_criacao.strftime('%d/%m/%Y') }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Estatísticas -->
+            <div class="card">
+                <h2>📊 Estatísticas</h2>
+                <ul>
+                    <li>Total de metadados: {{ metadados|length }}</li>
+                    <li>Pendentes: {{ metadados|selectattr('status', 'equalto', 'pendente')|list|length }}</li>
+                    <li>Aprovados: {{ metadados|selectattr('status', 'equalto', 'aprovado')|list|length }}</li>
+                    <li>Rejeitados: {{ metadados|selectattr('status', 'equalto', 'rejeitado')|list|length }}</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

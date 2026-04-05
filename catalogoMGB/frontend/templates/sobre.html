@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sobre - Catálogo MGB</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        .sobre-container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .sobre-card {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .sobre-card h2 {
+            color: #1a472a;
+            border-bottom: 2px solid #2d6a4f;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+        .sobre-card h3 {
+            color: #2d6a4f;
+            margin: 20px 0 10px 0;
+        }
+        .versao {
+            background: #e9ecef;
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+        }
+        .tecnologias {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        .tech-badge {
+            background: #2d6a4f;
+            color: white;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+        }
+        .btn-doacao {
+            display: inline-block;
+            background: #ffc107;
+            color: #333;
+            padding: 12px 24px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: bold;
+            margin-top: 15px;
+        }
+        .btn-doacao:hover {
+            background: #e0a800;
+        }
+        .creditos {
+            font-size: 12px;
+            color: #888;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+        }
+        header {
+            background: linear-gradient(135deg, #1a472a, #2d6a4f);
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .btn-voltar {
+            background: #6c757d;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 6px;
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="sobre-container">
+        <header>
+            <h1>📌 Sobre o Sistema</h1>
+            <a href="{{ url_for('index') }}" class="btn-voltar">← Voltar</a>
+        </header>
+
+        <div class="sobre-card">
+            <h2>🗺️ Catálogo de Metadados Geoespaciais - MGB</h2>
+            <p><span class="versao">Versão 1.0</span></p>
+            <p>Sistema para catalogação, busca e compartilhamento de metadados geoespaciais, seguindo o Perfil MGB (Metadados Geoespaciais do Brasil) baseado na norma <strong>ISO 19115</strong>.</p>
+        </div>
+
+        <div class="sobre-card">
+            <h2>👨‍💻 Desenvolvimento</h2>
+            <p><strong>Desenvolvedor:</strong> Luís Lopes</p>
+            <p><strong>Contato:</strong> <a href="mailto:geo.luislopes@gmail.com">geo.luislopes@gmail.com</a></p>
+            <p><strong>Site:</strong> <a href="https://www.geoluislopes.com.br" target="_blank">www.geoluislopes.com.br</a></p>
+        </div>
+
+        <div class="sobre-card">
+            <h2>⚙️ Tecnologias Utilizadas</h2>
+            <div class="tecnologias">
+                <span class="tech-badge">Python / Flask</span>
+                <span class="tech-badge">SQLite</span>
+                <span class="tech-badge">Leaflet</span>
+                <span class="tech-badge">PySHP</span>
+                <span class="tech-badge">PyProj</span>
+                <span class="tech-badge">Pillow</span>
+                <span class="tech-badge">HTML5 / CSS3</span>
+                <span class="tech-badge">JavaScript</span>
+            </div>
+        </div>
+
+        <div class="sobre-card">
+            <h2>📋 Padrões e Conformidade</h2>
+            <p>✅ Perfil MGB (Metadados Geoespaciais do Brasil)</p>
+            <p>✅ ISO 19115 - Metadados Geoespaciais</p>
+            <p>✅ INDE - Infraestrutura Nacional de Dados Espaciais</p>
+        </div>
+
+        <div class="sobre-card">
+            <h2>📄 Licença</h2>
+            <p>Este é um <strong>software gratuito</strong>. Você pode:</p></br>
+            <ul>
+                <li> Usar livremente em sua organização</li>
+                <li> Compartilhar com quem precisar</li>
+                <li> Modificar para suas necessidades</li>
+            </ul></br>
+            <p><strong>Obrigação:</strong> Manter os créditos do desenvolvedor original.</p>
+        </div>
+
+        <div class="sobre-card" style="text-align: center;">
+            <h2>❤️ Apoie o Projeto</h2>
+            <p>Se este software está te ajudando, considere fazer uma doação para que possamos continuar melhorando!</p>
+            <a href="https://nubank.com.br/cobrar/2grxq/69d29375-c431-4270-87f1-cbbd9a72551f" target="_blank" class="btn-doacao">💰 Fazer Doação</a>
+        </div>
+
+        <div class="creditos">
+            <p>Catálogo MGB - Desenvolvido por Luís Lopes</p>
+            <p>Software gratuito - Compartilhe com quem precisa!</p>
+        </div>
+    </div>
+</body>
+</html>

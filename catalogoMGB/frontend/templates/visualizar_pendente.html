@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <title>Revisão: {{ metadado.titulo }} - Catálogo MGB</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        /* Mesmos estilos do visualizar_publico.html */
+        .detail-container { max-width: 1000px; margin: 0 auto; }
+        .detail-header { background: linear-gradient(135deg, #1a472a, #2d6a4f); color: white; padding: 25px; border-radius: 12px; margin-bottom: 25px; }
+        .info-card { background: white; border-radius: 10px; padding: 20px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        .info-card h3 { color: #1a472a; border-bottom: 2px solid #2d6a4f; padding-bottom: 8px; margin-bottom: 15px; }
+        .info-row { display: flex; margin-bottom: 12px; flex-wrap: wrap; }
+        .info-label { width: 200px; font-weight: bold; color: #555; }
+        .info-value { flex: 1; color: #333; }
+        .keywords { display: flex; flex-wrap: wrap; gap: 6px; }
+        .badge { background: #e9ecef; padding: 4px 12px; border-radius: 20px; font-size: 12px; }
+        .badge-categoria { background: #2d6a4f; color: white; }
+        .files-list { background: #f8f9fa; padding: 10px; border-radius: 6px; }
+        .files-list a { color: #2d6a4f; text-decoration: none; display: inline-block; margin-right: 15px; }
+        .thumbnail-detail { max-width: 100%; max-height: 400px; border-radius: 8px; }
+        .btn-back { background: #6c757d; color: white; padding: 10px 20px; border-radius: 8px; text-decoration: none; display: inline-block; }
+        .btn-approve { background: #28a745; color: white; padding: 10px 20px; border-radius: 8px; text-decoration: none; display: inline-block; }
+        .btn-reject { background: #dc3545; color: white; padding: 10px 20px; border-radius: 8px; text-decoration: none; display: inline-block; }
+        .status-pending { display: inline-block; background: #f39c12; color: white; padding: 4px 12px; border-radius: 20px; font-size: 12px; }
+        .action-buttons { display: flex; gap: 15px; justify-content: center; margin-top: 20px; flex-wrap: wrap; }
+    </style>
+</head>
+<body>
+    <div class="container detail-container">
+        <div class="detail-header">
+            <h1>🔍 Revisão: {{ metadado.titulo }}</h1>
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">
+                <span>📅 {{ metadado.data_referencia or 'Data não informada' }} | 👤 {{ metadado.responsavel or 'Responsável não informado' }}</span>
+                <span class="status-pending">⏳ Aguardando Aprovação</span>
+            </div>
+        </div>
+
+        {% if metadado.thumbnail %}
+        <div class="info-card" style="text-align: center;">
+            <img src="{{ url_for('thumb', nome_arquivo=metadado.thumbnail) }}" class="thumbnail-detail" alt="{{ metadado.titulo }}">
+        </div>
+        {% endif %}
+
+        <div class="info-card">
+            <h3>📋 Identificação</h3>
+            <div class="info-row"><div class="info-label">Título:</div><div class="info-value">{{ metadado.titulo }}</div></div>
+            <div class="info-row"><div class="info-label">Data do Dado:</div><div class="info-value">{{ metadado.data_referencia or 'Não informada' }}</div></div>
+            <div class="info-row"><div class="info-label">Responsável:</div><div class="info-value">{{ metadado.responsavel or 'Não informado' }}</div></div>
+            <div class="info-row"><div class="info-label">Idioma:</div><div class="info-value">{{ metadado.idioma or 'Português' }}</div></div>
+            <div class="info-row"><div class="info-label">Resumo:</div><div class="info-value">{{ metadado.resumo or 'Sem descrição' }}</div></div>
+            <div class="info-row"><div class="info-label">Categorias Temáticas:</div><div class="info-value"><div class="keywords">{% for cat in metadado.categorias_lista %}<span class="badge badge-categoria">{{ cat }}</span>{% endfor %}</div></div></div>
+        </div>
+
+        <div class="info-card">
+            <h3>📦 Distribuição e Referência</h3>
+            <div class="info-row"><div class="info-label">Formato de Distribuição:</div><div class="info-value">{{ metadado.formato_distribuicao or 'Não informado' }}</div></div>
+            <div class="info-row"><div class="info-label">Sistema de Referência:</div><div class="info-value">{{ metadado.sistema_referencia or 'Não informado' }}</div></div>
+            <div class="info-row"><div class="info-label">Escala:</div><div class="info-value">{{ metadado.escala or 'Não informada' }}</div></div>
+            <div class="info-row"><div class="info-label">Palavras-chave:</div><div class="info-value"><div class="keywords">{% if metadado.palavras_chave %}{% for kw in metadado.palavras_chave.split(',') %}<span class="badge">{{ kw.strip() }}</span>{% endfor %}{% else %}Não informadas{% endif %}</div></div></div>
+        </div>
+
+        <div class="info-card">
+            <h3>🗺️ Informações Espaciais</h3>
+            <div class="info-row"><div class="info-label">Sistema de Coordenadas:</div><div class="info-value">{{ metadado.sistema_coordenadas or 'Não informado' }}</div></div>
+            <div class="info-row"><div class="info-label">Datum:</div><div class="info-value">{{ metadado.datum or 'SIRGAS2000' }}</div></div>
+            <div class="info-row"><div class="info-label">Extensão Geográfica:</div><div class="info-value">N: {{ metadado.extensao_norte or '---' }}° | S: {{ metadado.extensao_sul or '---' }}° | L: {{ metadado.extensao_leste or '---' }}° | O: {{ metadado.extensao_oeste or '---' }}°</div></div>
+        </div>
+
+        <div class="info-card">
+            <h3>📄 Informações do Metadado</h3>
+            <div class="info-row"><div class="info-label">Contato:</div><div class="info-value">{{ metadado.contato_metadados or 'Não informado' }}</div></div>
+            <div class="info-row"><div class="info-label">Data do Metadado:</div><div class="info-value">{{ metadado.data_metadados or 'Não informada' }}</div></div>
+            <div class="info-row"><div class="info-label">Status do Metadado:</div><div class="info-value">{{ metadado.status_metadado or 'Não informado' }}</div></div>
+            <div class="info-row"><div class="info-label">Submetido por:</div><div class="info-value">{{ metadado.criado_por.nome if metadado.criado_por else 'Desconhecido' }} ({{ metadado.criado_por.username if metadado.criado_por else '?' }})</div></div>
+        </div>
+
+        <div class="info-card">
+            <h3>📎 Arquivos para Download</h3>
+            <div class="files-list">{% if metadado.arquivos %}{% for arquivo in metadado.arquivos %}<div>📄 <a href="{{ url_for('download', nome_arquivo=arquivo.nome_salvo) }}" target="_blank">{{ arquivo.nome_original }}</a></div>{% endfor %}{% else %}Nenhum arquivo anexado{% endif %}</div>
+        </div>
+
+        <div class="action-buttons">
+            <a href="{{ url_for('pendentes') }}" class="btn-back">← Voltar</a>
+            <a href="{{ url_for('aprovar', id=metadado.id) }}" class="btn-approve" onclick="return confirm('Aprovar {{ metadado.titulo }}?')">✅ Aprovar</a>
+            <a href="{{ url_for('rejeitar', id=metadado.id) }}" class="btn-reject" onclick="return confirm('Rejeitar {{ metadado.titulo }}?')">❌ Rejeitar</a>
+			{% if usuario and usuario.papel == 'admin' %}
+				<div class="action-buttons" style="margin-top: 20px; justify-content: center;">
+					<a href="{{ url_for('admin_editar_metadado', id=metadado.id) }}" class="btn btn-info">✏️ Editar</a>
+					{% if metadado.status == 'aprovado' %}
+						<a href="{{ url_for('admin_desaprovar', id=metadado.id) }}" class="btn btn-warning" onclick="return confirm('Desaprovar {{ metadado.titulo }}? Ele voltará para pendente.')">🔄 Desaprovar</a>
+						<a href="{{ url_for('admin_descontinuar', id=metadado.id) }}" class="btn btn-secondary">📌 Marcar Descontinuado</a>
+						<a href="{{ url_for('admin_excluir', id=metadado.id) }}" class="btn btn-danger" onclick="return confirm('EXCLUSÃO PERMANENTE. Tem certeza?')">🗑️ Excluir</a>
+					{% endif %}
+				</div>
+			{% endif %}
+        </div>
+		<!-- Ações de ADMIN -->
+{% if usuario and usuario.papel == 'admin' %}
+<div class="info-card">
+    <h3>🔧 Administração</h3>
+    
+    <a href="{{ url_for('admin_editar_metadado', id=metadado.id) }}" class="btn-info" style="display: block; text-align: center; padding: 8px; margin-bottom: 8px; background: #17a2b8; color: white; text-decoration: none; border-radius: 6px;">
+        ✏️ Editar Metadado
+    </a>
+    
+    <a href="{{ url_for('admin_excluir', id=metadado.id) }}" class="btn-danger" style="display: block; text-align: center; padding: 8px; background: #dc3545; color: white; text-decoration: none; border-radius: 6px;" onclick="return confirm('EXCLUSÃO PERMANENTE. Tem certeza?')">
+        🗑️ Excluir Metadado
+    </a>
+</div>
+{% endif %}
+    </div>
+</body>
+</html>

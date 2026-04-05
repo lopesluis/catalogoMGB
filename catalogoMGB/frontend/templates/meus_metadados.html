@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <title>Meus Metadados - Catálogo MGB</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+        table { width: 100%; border-collapse: collapse; background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
+        th { background: #2d6a4f; color: white; }
+        .status { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: bold; }
+        .status-aprovado { background: #28a745; color: white; }
+        .status-pendente { background: #f39c12; color: white; }
+        .status-rejeitado { background: #dc3545; color: white; }
+        .btn-sm { padding: 5px 12px; font-size: 12px; border-radius: 5px; text-decoration: none; margin: 0 2px; display: inline-block; }
+        .btn-edit { background: #17a2b8; color: white; }
+        .btn-view { background: #3498db; color: white; }
+        .btn-edit:hover, .btn-view:hover { opacity: 0.8; }
+        .motivo { font-size: 12px; color: #dc3545; max-width: 250px; word-wrap: break-word; }
+        header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px; }
+        .alert { padding: 15px; border-radius: 8px; margin-bottom: 20px; }
+        .alert-warning { background: #fff3cd; color: #856404; border-left: 4px solid #ffc107; }
+        .alert-info { background: #d1ecf1; color: #0c5460; border-left: 4px solid #17a2b8; }
+        .btn-primary { background: #2d6a4f; color: white; padding: 8px 16px; border-radius: 5px; text-decoration: none; }
+        @media (max-width: 768px) {
+            table, thead, tbody, th, td, tr { display: block; }
+            th { display: none; }
+            tr { margin-bottom: 15px; border: 1px solid #ddd; border-radius: 8px; }
+            td { display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid #eee; }
+            td:before { content: attr(data-label); font-weight: bold; width: 40%; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📋 Meus Metadados</h1>
+            <div>
+                <a href="{{ url_for('cadastrar') }}" class="btn-primary">➕ Novo Metadado</a>
+                <a href="{{ url_for('index') }}" class="btn-sm" style="background: #6c757d; color: white;">← Voltar</a>
+            </div>
+        </header>
+
+        <!-- Alertas de metadados rejeitados -->
+        {% set rejeitados_count = metadados|selectattr('status', 'equalto', 'rejeitado')|list|length %}
+        {% if rejeitados_count > 0 %}
+            <div class="alert alert-warning">
+                ⚠️ <strong>Atenção!</strong> Você tem <strong>{{ rejeitados_count }} metadado(s) rejeitado(s)</strong> que precisam de correção.
+                Clique em <strong>"Editar e Reenviar"</strong> para corrigir e enviar novamente para aprovação.
+            </div>
+        {% endif %}
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }}">{{ message }}</div>
+            {% endfor %}
+        {% endwith %}
+
+        {% if metadados %}
+            <table>
+                <thead>
+                    <tr>
+                        <th>Título</th>
+                        <th>Data</th>
+                        <th>Status</th>
+                        <th>Motivo (se rejeitado)</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for m in metadados %}
+                        <tr>
+                            <td data-label="Título"><strong>{{ m.titulo }}</strong></td>
+                            <td data-label="Data">{{ m.data_criacao.strftime('%d/%m/%Y') if m.data_criacao else '-' }}</td>
+                            <td data-label="Status">
+                                {% if m.status == 'aprovado' %}
+                                    <span class="status status-aprovado">✅ Aprovado</span>
+                                {% elif m.status == 'pendente' %}
+                                    <span class="status status-pendente">⏳ Pendente</span>
+                                {% elif m.status == 'rejeitado' %}
+                                    <span class="status status-rejeitado">❌ Rejeitado</span>
+                                {% endif %}
+                            </td>
+                            <td data-label="Motivo" class="motivo">
+                                {% if m.status == 'rejeitado' and m.motivo_rejeicao %}
+                                    {{ m.motivo_rejeicao }}
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+                            <td data-label="Ações">
+                                <a href="{{ url_for('visualizar_publico', id=m.id) }}" class="btn-view btn-sm">🔍 Ver</a>
+                                {% if m.status == 'rejeitado' %}
+                                    <a href="{{ url_for('editar_metadado', id=m.id) }}" class="btn-edit btn-sm">✏️ Editar e Reenviar</a>
+                                {% elif m.status == 'pendente' %}
+                                    <span style="font-size: 12px; color: #888;">Aguardando análise</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <div style="text-align: center; padding: 50px; background: white; border-radius: 10px;">
+                <p>📭 Você ainda não cadastrou nenhum metadado.</p>
+                <a href="{{ url_for('cadastrar') }}" class="btn-primary">➕ Cadastrar primeiro metadado</a>
+            </div>
+        {% endif %}
+    </div>
+</body>
+</html>

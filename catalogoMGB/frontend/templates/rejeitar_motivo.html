@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <title>Rejeitar Metadado - Catálogo MGB</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        .container {
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+        .card {
+            background: white;
+            border-radius: 10px;
+            padding: 25px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            min-height: 150px;
+            font-family: inherit;
+        }
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            font-weight: bold;
+            display: block;
+            margin-bottom: 8px;
+        }
+        .btn-danger:hover, .btn-secondary:hover {
+            opacity: 0.9;
+        }
+        h2 {
+            color: #dc3545;
+            margin-bottom: 20px;
+        }
+        .metadado-info {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <h2>❌ Rejeitar Metadado</h2>
+            
+            <div class="metadado-info">
+                <strong>Metadado:</strong> {{ metadado.titulo }}<br>
+                <strong>Submetido por:</strong> {{ metadado.criado_por.nome if metadado.criado_por else 'Desconhecido' }}
+            </div>
+            
+            <p>Informe o motivo da rejeição para o cadastrador saber o que corrigir:</p>
+            
+            <form method="POST">
+                <div class="form-group">
+                    <label>Motivo da rejeição:</label>
+                    <textarea name="motivo" required placeholder="Ex: Faltam palavras-chave, a escala está incorreta, o arquivo não abriu, dados incompletos..."></textarea>
+                </div>
+                
+                <div style="display: flex; gap: 10px;">
+                    <button type="submit" class="btn btn-danger">✅ Confirmar Rejeição</button>
+                    <a href="{{ url_for('pendentes') }}" class="btn btn-secondary">← Voltar</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</body>
+</html>

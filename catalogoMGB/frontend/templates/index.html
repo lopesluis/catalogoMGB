@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Catálogo de Metadados Geoespaciais - MGB</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        /* Estilos específicos para cards simplificados */
+        .metadata-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 25px;
+        }
+        .card-simples {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .card-simples:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+        }
+        .card-simples .thumbnail {
+            width: 100%;
+            height: 200px;
+            background: #2d6a4f;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+        .card-simples .thumbnail img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .card-simples .no-thumbnail {
+            font-size: 48px;
+            color: rgba(255,255,255,0.7);
+        }
+        .card-simples .card-title {
+            padding: 15px;
+            text-align: center;
+            font-weight: 600;
+            color: #1a472a;
+            border-top: 1px solid #eee;
+        }
+        .empty {
+            text-align: center;
+            padding: 60px;
+            color: #888;
+            background: white;
+            border-radius: 12px;
+        }
+        
+        /* Paginação */
+        .pagination {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 30px;
+            flex-wrap: wrap;
+        }
+        .pagination a, .pagination span {
+            padding: 8px 16px;
+            border-radius: 6px;
+            text-decoration: none;
+            color: #2d6a4f;
+            background: white;
+            border: 1px solid #ddd;
+            transition: all 0.2s;
+        }
+        .pagination a:hover {
+            background: #2d6a4f;
+            color: white;
+            border-color: #2d6a4f;
+        }
+        .pagination .active {
+            background: #2d6a4f;
+            color: white;
+            border-color: #2d6a4f;
+        }
+        .pagination .disabled {
+            color: #ccc;
+            cursor: not-allowed;
+        }
+        
+        /* Filtros */
+        .filters-row {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        .filter-select {
+            padding: 10px 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 30px;
+            font-size: 14px;
+            background: white;
+            cursor: pointer;
+            flex: 1;
+            min-width: 150px;
+        }
+        .filter-select:focus {
+            outline: none;
+            border-color: #2d6a4f;
+        }
+        .stats-info {
+            font-size: 14px;
+            color: #666;
+            margin-top: 10px;
+            text-align: center;
+        }
+        
+        /* Categorias */
+        .categorias-filtro {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin: 15px 0;
+            padding: 10px 0;
+            border-top: 1px solid #eee;
+            border-bottom: 1px solid #eee;
+        }
+        .cat-badge {
+            background: #e9ecef;
+            padding: 5px 12px;
+            border-radius: 25px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .cat-badge:hover {
+            background: #2d6a4f;
+            color: white;
+        }
+        .cat-badge.active {
+            background: #2d6a4f;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="header-title">
+                <h1>🗺️ Catálogo de Metadados Geoespaciais</h1>
+                <p>Perfil MGB - ISO 19115 | Infraestrutura Nacional de Dados Espaciais (INDE)</p>
+            </div>
+            <div class="user-info">
+                <a href="{{ url_for('sobre') }}" class="btn-small" style="background: #17a2b8;">📌 Sobre</a>
+                {% if usuario %}
+                    <span>👤 {{ usuario.nome }} ({{ usuario.papel }})</span>
+                    <a href="{{ url_for('logout') }}" class="btn-small">Sair</a>
+                {% else %}
+                    <a href="{{ url_for('login') }}" class="btn-small">Login</a>
+                {% endif %}
+            </div>
+        </header>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }}">{{ message }}</div>
+            {% endfor %}
+        {% endwith %}
+
+        {% if usuario and usuario.papel in ['admin', 'cadastrador'] %}
+            <div class="action-bar">
+                <a href="{{ url_for('cadastrar') }}" class="btn btn-primary">➕ Novo Metadado</a>
+                <a href="{{ url_for('meus_metadados') }}" class="btn btn-secondary">📋 Meus Metadados</a>
+                {% if usuario.papel == 'admin' %}
+                    <a href="{{ url_for('pendentes') }}" class="btn btn-warning">⏳ Pendentes</a>
+					<a href="{{ url_for('admin_usuarios') }}" class="btn btn-secondary">👥 Usuários</a>
+                    <a href="{{ url_for('admin') }}" class="btn btn-secondary">⚙️ Admin</a>
+                    <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">📊 Dashboard</a>
+                {% endif %}
+            </div>
+        {% endif %}
+
+        <!-- Barra de Busca -->
+        <div class="search-bar">
+            <div class="search-container">
+                <input type="text" id="searchInput" class="search-input" placeholder="🔍 Buscar metadados..." autocomplete="off">
+                <select id="filterType" class="filter-select">
+                    <option value="all">📋 Todos os tipos</option>
+                    <option value=".shp">🗺️ Shapefile (.shp)</option>
+                    <option value=".gpkg">📦 GeoPackage (.gpkg)</option>
+                    <option value=".tif">🖼️ GeoTIFF (.tif)</option>
+                    <option value=".pdf">📄 PDF (.pdf)</option>
+                </select>
+                <button onclick="buscarMetadados()" class="search-btn">Buscar</button>
+                <button onclick="limparBusca()" class="btn btn-outline">Limpar</button>
+            </div>
+        </div>
+
+        <!-- Filtro por Categoria Temática -->
+        <div class="categorias-filtro" id="categoriasFiltro">
+            <span style="font-weight: 600; margin-right: 10px;">Categorias:</span>
+            <span class="cat-badge active" data-cat="all">Todas</span>
+            <span class="cat-badge" data-cat="Agricultura">🌾 Agricultura</span>
+            <span class="cat-badge" data-cat="Biota">🦋 Biota</span>
+            <span class="cat-badge" data-cat="Limites">📏 Limites</span>
+            <span class="cat-badge" data-cat="Climatologia / Meteorologia / Atmosfera">☁️ Climatologia</span>
+            <span class="cat-badge" data-cat="Economia">💰 Economia</span>
+            <span class="cat-badge" data-cat="Elevação">⛰️ Elevação</span>
+            <span class="cat-badge" data-cat="Ambiente">🌳 Ambiente</span>
+            <span class="cat-badge" data-cat="Informações Geocientíficas">🔬 Geociências</span>
+            <span class="cat-badge" data-cat="Saúde">🏥 Saúde</span>
+            <span class="cat-badge" data-cat="Imagens de base / Cobertura da Terra">🛰️ Imagens</span>
+            <span class="cat-badge" data-cat="Águas interiores">💧 Águas</span>
+            <span class="cat-badge" data-cat="Localização">📍 Localização</span>
+            <span class="cat-badge" data-cat="Oceanos">🌊 Oceanos</span>
+            <span class="cat-badge" data-cat="Planejamento / Cadastro">📋 Planejamento</span>
+            <span class="cat-badge" data-cat="Sociedade">👥 Sociedade</span>
+            <span class="cat-badge" data-cat="Transporte">🚆 Transporte</span>
+            <span class="cat-badge" data-cat="Utilidades / Comunicação">📡 Utilidades</span>
+        </div>
+
+        <!-- Catálogo -->
+        <div class="catalog">
+            <h2>📚 Metadados Publicados</h2>
+            <div id="metadataGrid" class="metadata-grid">
+                <div class="empty">Carregando metadados...</div>
+            </div>
+        </div>
+
+        <!-- Paginação -->
+        <div id="pagination" class="pagination"></div>
+
+        <!-- Rodapé -->
+        <footer style="text-align: center; padding: 25px; margin-top: 40px; border-top: 1px solid #ddd; background: #f8f9fa; border-radius: 8px;">
+            <p style="margin: 5px 0;">
+                <strong>Catálogo MGB</strong> - Desenvolvido por <strong>Luís Lopes</strong>
+            </p>
+            <p style="margin: 5px 0; font-size: 12px; color: #888;">
+                Software gratuito - Padrão ISO 19115 / Perfil MGB
+            </p>
+            <p style="margin: 5px 0;">
+                <a href="{{ url_for('sobre') }}" style="color: #2d6a4f; text-decoration: none; margin: 0 10px;">📌 Sobre</a>
+                <a href="https://nubank.com.br/cobrar/2grxq/69d29375-c431-4270-87f1-cbbd9a72551f" style="color: #2d6a4f; text-decoration: none; margin: 0 10px;">❤️ Doação</a>
+                <a href="mailto:geo.luislopes@gmail.com" style="color: #2d6a4f; text-decoration: none; margin: 0 10px;">📧 Contato</a>
+            </p>
+            <p style="margin: 10px 0 0 0; font-size: 11px; color: #aaa;">
+                © 2026 - Todos os direitos reservados
+            </p>
+        </footer>
+    </div>
+
+    <script>
+        let estado = {
+            pagina: 1,
+            termo: '',
+            tipo: 'all',
+            categoria: 'all',
+            total_paginas: 1
+        };
+
+        function buscarMetadados() {
+            estado.termo = document.getElementById('searchInput').value.trim();
+            estado.tipo = document.getElementById('filterType').value;
+            estado.pagina = 1;
+            carregarMetadados();
+        }
+
+        function limparBusca() {
+            document.getElementById('searchInput').value = '';
+            document.getElementById('filterType').value = 'all';
+            document.querySelectorAll('.cat-badge').forEach(b => b.classList.remove('active'));
+            document.querySelector('.cat-badge[data-cat="all"]').classList.add('active');
+            estado.termo = '';
+            estado.tipo = 'all';
+            estado.categoria = 'all';
+            estado.pagina = 1;
+            carregarMetadados();
+        }
+
+        function filtrarPorCategoria(categoria) {
+            document.querySelectorAll('.cat-badge').forEach(b => b.classList.remove('active'));
+            document.querySelector(`.cat-badge[data-cat="${categoria}"]`).classList.add('active');
+            estado.categoria = categoria === 'all' ? 'all' : categoria;
+            estado.pagina = 1;
+            carregarMetadados();
+        }
+
+        function irParaPagina(pagina) {
+            if (pagina < 1 || pagina > estado.total_paginas) return;
+            estado.pagina = pagina;
+            carregarMetadados();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function carregarMetadados() {
+            const url = `/api/buscar?q=${encodeURIComponent(estado.termo)}&tipo=${estado.tipo}&categoria=${estado.categoria}&pagina=${estado.pagina}`;
+            
+            fetch(url)
+                .then(response => response.json())
+                .then(data => {
+                    estado.total_paginas = data.total_paginas;
+                    renderizarCards(data.resultados);
+                    renderizarPaginacao(data);
+                })
+                .catch(error => {
+                    console.error('Erro:', error);
+                    document.getElementById('metadataGrid').innerHTML = '<div class="empty">❌ Erro ao carregar metadados.</div>';
+                });
+        }
+
+        function renderizarCards(metadadosLista) {
+            const grid = document.getElementById('metadataGrid');
+            
+            if (!metadadosLista || metadadosLista.length === 0) {
+                grid.innerHTML = '<div class="empty">🔍 Nenhum metadado encontrado com os critérios selecionados.</div>';
+                return;
+            }
+            
+            grid.innerHTML = metadadosLista.map(m => {
+                const thumbnailUrl = m.thumbnail ? `/thumb/${m.thumbnail}` : null;
+                return `
+                    <div class="card-simples" onclick="window.location.href='/metadado/${m.id}'">
+                        <div class="thumbnail">
+                            ${thumbnailUrl ? 
+                                `<img src="${thumbnailUrl}" alt="${m.titulo}" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22100%22 height=%22100%22 viewBox=%220 0 100 100%22%3E%3Crect width=%22100%22 height=%22100%22 fill=%22%232d6a4f%22/%3E%3Ctext x=%2250%22 y=%2255%22 text-anchor=%22middle%22 fill=%22white%22 font-size=%2240%22%3E🗺️%3C/text%3E%3C/svg%3E'">` : 
+                                '<div class="no-thumbnail">🗺️</div>'}
+                        </div>
+                        <div class="card-title">${m.titulo || 'Sem título'}</div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderizarPaginacao(data) {
+            const paginationDiv = document.getElementById('pagination');
+            const totalPaginas = data.total_paginas;
+            const paginaAtual = data.pagina;
+            
+            if (totalPaginas <= 1) {
+                paginationDiv.innerHTML = '';
+                return;
+            }
+            
+            let html = '';
+            
+            if (paginaAtual > 1) {
+                html += `<a href="#" onclick="irParaPagina(${paginaAtual - 1}); return false;">« Anterior</a>`;
+            } else {
+                html += `<span class="disabled">« Anterior</span>`;
+            }
+            
+            const inicio = Math.max(1, paginaAtual - 2);
+            const fim = Math.min(totalPaginas, paginaAtual + 2);
+            
+            if (inicio > 1) {
+                html += `<a href="#" onclick="irParaPagina(1); return false;">1</a>`;
+                if (inicio > 2) html += `<span>...</span>`;
+            }
+            
+            for (let i = inicio; i <= fim; i++) {
+                if (i === paginaAtual) {
+                    html += `<span class="active">${i}</span>`;
+                } else {
+                    html += `<a href="#" onclick="irParaPagina(${i}); return false;">${i}</a>`;
+                }
+            }
+            
+            if (fim < totalPaginas) {
+                if (fim < totalPaginas - 1) html += `<span>...</span>`;
+                html += `<a href="#" onclick="irParaPagina(${totalPaginas}); return false;">${totalPaginas}</a>`;
+            }
+            
+            if (paginaAtual < totalPaginas) {
+                html += `<a href="#" onclick="irParaPagina(${paginaAtual + 1}); return false;">Próximo »</a>`;
+            } else {
+                html += `<span class="disabled">Próximo »</span>`;
+            }
+            
+            paginationDiv.innerHTML = html;
+        }
+
+        document.getElementById('searchInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') buscarMetadados();
+        });
+        
+        document.querySelectorAll('.cat-badge').forEach(badge => {
+            badge.addEventListener('click', function() {
+                const cat = this.getAttribute('data-cat');
+                filtrarPorCategoria(cat);
+            });
+        });
+
+        carregarMetadados();
+    </script>
+</body>
+</html>
