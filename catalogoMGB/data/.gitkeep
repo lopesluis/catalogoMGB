@@ -1,0 +1,3 @@
+# Esta pasta armazena o banco de dados SQLite (database.db)
+# O arquivo será criado automaticamente na primeira execução.
+# Você pode apagar este .gitkeep após o download, se desejar.
